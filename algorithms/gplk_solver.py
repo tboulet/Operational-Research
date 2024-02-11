@@ -22,7 +22,7 @@ class GPLK_Solver(BaseAlgorithm):
             b,
             A_eq,
             b_eq,
-            variable_types,
+            variable_types,   # TODO : include this in the problem
             variable_bounds,
             sense,
         ) = self.problem.get_linear_formulation()
