@@ -1,59 +1,59 @@
-# research-project-template
-A template repository, for the objective of combining research and good code practice. It focuses on code structure, modularity, configuration system (Hydra) and logging (tensorboard and WandB)
+# Operation Research
 
-# Repository structure
-The repository is structured as follows. Each point is detailed below.
-```
-├── README.md        <- The top-level README for developers using this project
-├── configs         <- Configuration files for Hydra. The subtree is detailed below
-│ ├─ solver        <- Configuration files for the solver (algorithms? models?, agents?)
-│ ├─ task          <- Configuration files for the task (environments?, datasets?)
-│ ├─ config_default.yaml  <- Default configuration file
-│ └─ personal_config.yaml   <- Your personal configuration file, ignored by git and that you can change as you wish for debugging
-├── src             <- Source code for use in this project
-├── data            <- Data folder, ignored by git
-├── logs           <- Logs folder, ignored by git (tensorboard, wandb, CSVs, ...)
-├── venv           <- Virtual environment folder, ignored by git
-├── requirements.txt  <- The requirements file for reproducing the analysis environment
-├── LICENSE        <- License file
-├── run.py         <- Main script to run the code
-└── personal_files <- Personal files, ignored by git (e.g. notes, debugging test scripts, ...)
-```
+OR methods for Linear Programming and Integer Programming, with a focus on the VM Placement problem
 
-# Virtual environment
+## VM Placement Problem
 
-For the sake of reproducibility, and to avoid conflicts with other projects, it is recommended to use a virtual environment. 
+This problem consist of placing a set of VMs on a set of servers, with the goal of minimizing the number of servers used. This is a NP-hard problem, and can be formulated as a Linear Programming problem.
 
-There are several ways to create a virtual environment. A good one is Virtual Env.
+## Problem Formulation
 
-The following commands create a virtual environment named ``./venv/`` and install the requirements.
+- We note $x_{ij}$ the decision variable, which is equal to 1 if the VM $j$ is placed on the server $i$, and 0 otherwise.
+- There are $n$ servers and $m$ VMs
+- The goal is to minimize the number of servers used, so we introduce the variable $y_i$ which is equal to 1 if the server $i$ is used, and 0 otherwise. The goal is to minimize the following objective function:
+  $$\sum_{i=1}^{n} y_i$$
+- For each ressource $k$ (CPU, RAM, Disk, Network), we note $c_{i,k}$ the capacity of the server $i$ for the ressource $k$, and $a_{j,k}$ the consumption of the VM $j$ for the ressource $k$.
+- Any server cannot be overloaded, so we have the following constraint for each server $i$ and each ressource $k$:
+    $$\sum_{j=1}^{m} a_{j,k} \times x_{i,j} \leq c_{i,k} \times y_i$$
+- Any VM must be placed on exactly (or more than?) one server, so we have the following constraint for each VM $j$:
+  $$\sum_{i=1}^{n} x_{i,j} = 1$$
+  We could potentially relax this constraint to allow the VM to be placed on several servers.
 
-```bash
-python3 -m venv venv
-source venv/bin/activate  # for linux
-venv\Scripts\activate.bat  # for windows
-pip install -r requirements.txt
-```
+## VM Placement Problem variants
 
-# Configuration system : Hydra
+#### 1) Affinity rules between some of the VMs
 
-For a clean way of interacting with the code, it is advised to implement a Command Line Interface (CLI) and a configuration system. A simple approach is to use the ``argparse``, but I suggest to use [Hydra](https://hydra.cc/). Hydra is a framework that allows to easily create a CLI and a configuration system. It is very powerful and flexible, and allows to create a configuration tree.
+This can happen for example if some VM work better if deployed on the same physical machine, or if some VMs should not be deployed on the same physical machine for security reason for example.
 
-# Logging 
+In the same-server case, it is equivalent to additionate the two VMs capacities.
 
-Logging is a very important part of a project. It allows to keep track of the experiments, to debug, to compare the results, to reproduce the results, etc.
+In the different-server case, we have the following constraint : for any *(j,j') pair of uncompatible VMs, and any server $i$:
+$$x_{i,j} + x_{i,j'} \leq 1$$
+This means that if the VM $j$ is placed on the server $i$, then the VM $j'$ cannot be placed on the same server.
 
-### WandB
-WandB is a very powerful tool for logging. It is flexible, logs everything online, can be used to compare experiments or group those by dataset or algorithm, etc. You can also be several people to work on the same project and share the results directly on line. It is also very easy to use, and can be used with a few lines of code.
+#### 2) Case where all servers are partly occupied vs totally empty and all with the same characteristics
 
-Cons : it can sometimes be slow to start. It also makes the CTRL+C command buggy sometimes.
+TODO
 
-### Tensorboard
-Tensorboard is a tool from Tensorflow that allows to visualize the training. It is usefull during the development phase, to check that everything is working as expected. It is also very easy to use, and can be used with a few lines of code.
+#### 3) VMs could be splitted over several servers
 
-Cons : it does not log everything online, and it is hard to compare experiments.
+This is a case where it is possible to split the deployment of any VM on $k$ servers, with $k$ a given integer. This is not equivalent to the linear relaxation case, where $k$ would be equal to the number of servers. In this case the VM can be split but not infinitely.
 
-### CSV
-CSV files are a simple way to log the results. It is good practice to log the results in a CSV file, be it for using the results later.
+In this case, we can relax the integer constraint and set the bounds at (0,1). We now need to force the number of non-null $x_{i,j}$ to be inferior to $k$.
 
-Cons : it is hard to compare experiments, and it is not very flexible.
+For this, we introduce the variable $z_{i,j}$ which is equal to 1 if the VM $j$ is partially placed on the server $i$, and 0 otherwise : $z_{i,j} = 1_{x_{i,j} \neq 0}$. 
+
+We can obtain this with the constraints $z_{i,j} \geq x_{i,j}$ and $z_{i,j} * \epsilon \leq x_{i,j}$, with $\epsilon$ a small positive number.
+
+We then have the following constraint for each VM $j$:
+$$\sum_{i=1}^{n} z_{i,j} \leq k$$
+
+If we want each assignment of a VM to the server to be at least equal to a given fraction $\alpha$ of the VM capacity, we simply have to set $\epsilon$ to $\alpha$.
+
+#### 4) Consider VMs families, each family is given a criticity level between 1 to 3
+
+In this case, it is imperative to assign the VMs of high criticity, and less important to assign the VMs of low criticity. This can be done as a soft or hard way.
+
+#### 5) Online VMP
+
+In this case, the VMs are arriving one by one, and the goal is to place them as they arrive. This is a case of online optimization, and the goal is to minimize the number of migrations.

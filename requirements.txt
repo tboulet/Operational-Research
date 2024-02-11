@@ -1,11 +1,15 @@
-# Logging 
+# Logging and monitoring
 matplotlib 
 tqdm
+snakeviz
 wandb
 tensorboardX
 
 # Config system
 hydra-core
 
-# Common libraries
+# ML & OR libraries
 numpy
+scipy
+pyomo
+gurobipy
