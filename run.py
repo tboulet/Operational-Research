@@ -1,4 +1,6 @@
 # Logging
+import os
+import random
 import wandb
 from tensorboardX import SummaryWriter
 
@@ -20,6 +22,7 @@ import numpy as np
 from algorithms import algo_tag_to_AlgoClass
 from problems import problem_tag_to_ProblemClass
 from src.time_measure import RuntimeMeter
+from src.utils import to_integer, try_get_seed
 
 
 @hydra.main(config_path="configs", config_name="config_default.yaml")
@@ -29,12 +32,17 @@ def main(config: DictConfig):
     config = OmegaConf.to_container(config, resolve=True)
     solver_name: str = config["algo"]["name"]
     task_name: str = config["problem"]["name"]
-    n_iterations_max: int = config["n_iterations_max"]
+    n_iterations_max: int = to_integer(config["n_iterations_max"])
     do_cli: bool = config["do_cli"]
     do_wandb: bool = config["do_wandb"]
     do_tb: bool = config["do_tb"]
     do_tqdm: bool = config["do_tqdm"]
 
+    # Set seed
+    seed = try_get_seed(config)
+    np.random.seed(seed)
+    random.seed(seed)
+    
     # Get the algo
     AlgoClass = algo_tag_to_AlgoClass[solver_name]
     algo = AlgoClass(config=config["algo"]["config"])
@@ -45,7 +53,7 @@ def main(config: DictConfig):
 
     # Initialize loggers
     run_name = f"[{solver_name}]_[{task_name}]_{datetime.datetime.now().strftime('%dth%mmo_%Hh%Mmin%Ss')}_seed{np.random.randint(1000)}"
-    print(f"Starting run {run_name}")
+    print(f"\nStarting run {run_name}")
     metrics = {}
     if do_wandb:
         run = wandb.init(
@@ -61,15 +69,20 @@ def main(config: DictConfig):
     
     # Training loop
     for iteration in tqdm(range(n_iterations_max), disable=not do_tqdm):
+        print(f"\nIteration {iteration}...")
         # Get the algo result
         with RuntimeMeter("optimize") as rm:
             solution = algo.run_one_iteration()
-
+            print("Solution computed.")
+            
         # Apply the solution to the problem
         with RuntimeMeter("apply_solution") as rm:
-            objective_value = problem.apply_solution(solution)
+            isFeasible, objective_value = problem.apply_solution(solution)
+            print()
             print(f"Objective value at iteration {iteration}: {objective_value}")
+            print(f"Is feasible at iteration {iteration}: {isFeasible}")
             metrics["objective_value"] = objective_value
+            metrics["is_feasible"] = int(isFeasible)
             
         # Log metrics.
         with RuntimeMeter("log") as rm:
@@ -94,6 +107,16 @@ def main(config: DictConfig):
                     f"Metric results at iteration {iteration}: {metrics}"
                 )
 
+        # Stop the run if the algorithm has finished
+        if algo.stop_algorithm():
+            print(f"\nStopping run under algorithm criteria at iteration {iteration}")
+            break
+        
+        # Stop the run if the optimization time has exceeded the maximum time
+        if rm.get_stage_runtime("optimize") > config["max_runtime"]:
+            print(f"\nStopping run because the optimization time {rm.get_stage_runtime('optimize')} has exceeded the maximum time of {config['max_runtime']}")
+            break
+        
     # Finish the WandB run.
     if do_wandb:
         run.finish()
@@ -102,5 +125,6 @@ def main(config: DictConfig):
 if __name__ == "__main__":
     with cProfile.Profile() as pr:
         main()
-    pr.dump_stats("logs/profile_stats.prof")
-    print("Profile stats dumped to profile_stats.prof")
+    os.makedirs("logs", exist_ok=True)
+    pr.dump_stats("logs/profile.prof")
+    print("Profile stats dumped to profile.prof")

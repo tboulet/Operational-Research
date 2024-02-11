@@ -1,3 +1,6 @@
+# Install this first
+pyomo[optional]
+
 # Logging and monitoring
 matplotlib 
 tqdm
@@ -11,5 +14,5 @@ hydra-core
 # ML & OR libraries
 numpy
 scipy
-pyomo
+pyomo[optional]
 gurobipy

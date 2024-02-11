@@ -9,8 +9,8 @@ from problems.base_problem import BaseOptimizationProblem
 class BaseAlgorithm(ABC):
     """Base class for any optimization algorithm. It is an abstract class that defines the interface for any optimization algorithm."""
 
-    def __init__(self, config_algo: Dict):
-        self.config_algo = config_algo
+    def __init__(self, config: Dict):
+        self.config = config
 
     @abstractmethod
     def initialize_algorithm(self, problem: BaseOptimizationProblem) -> None:
