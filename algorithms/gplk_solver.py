@@ -4,11 +4,15 @@ import pyomo.environ as pyo
 
 from algorithms.base_algorithm import BaseAlgorithm
 from problems.base_problem import BaseOptimizationProblem
+from src.pyomo_utils import (
+    variable_string_sense_to_pyomo_sense,
+    variable_string_type_to_pyomo_domain,
+)
 
 
 class GPLK_Solver(BaseAlgorithm):
     """A solver that uses Pyomo and the GPLK solver to solve any MILP problem.
-    This algorithm provides probably a lower bound on any
+    This algorithm provides probably a lower bound on any solution other algorithms may find.
     """
 
     def initialize_algorithm(self, problem: BaseOptimizationProblem) -> None:
@@ -22,7 +26,7 @@ class GPLK_Solver(BaseAlgorithm):
             b,
             A_eq,
             b_eq,
-            variable_types,   # TODO : include this in the problem
+            variable_types,  # TODO : include this in the problem
             variable_bounds,
             sense,
         ) = self.problem.get_linear_formulation()
@@ -39,15 +43,25 @@ class GPLK_Solver(BaseAlgorithm):
         model = pyo.ConcreteModel()
 
         # Define the decision variables
-        model.x = pyo.Var(variable_names, domain=pyo.Binary)
+        for variable_idx, variable_name in variable_idx_to_name.items():
+            setattr(
+                model,
+                variable_name,
+                pyo.Var(
+                    domain=variable_string_type_to_pyomo_domain[
+                        variable_types[variable_idx]
+                    ],
+                    bounds=variable_bounds[variable_idx],
+                ),
+            )
 
         # Define the objective function
         model.profit = pyo.Objective(
             expr=sum(
-                model.x[variable_name_to_idx[variable_names[i]]] * c[i]
+                getattr(model, variable_names[i]) * c[i]
                 for i in range(len(variable_names))
             ),
-            sense=1 if sense == "minimize" else -1,
+            sense=variable_string_sense_to_pyomo_sense[sense],
         )
 
         # Define the constraints
@@ -55,7 +69,7 @@ class GPLK_Solver(BaseAlgorithm):
         for i in range(A.shape[0]):
             model.constraints.add(
                 sum(
-                    model.x[variable_name_to_idx[variable_names[j]]] * A[i, j]
+                    getattr(model, variable_names[j]) * A[i, j]
                     for j in range(len(variable_names))
                 )
                 <= b[i]
@@ -63,7 +77,7 @@ class GPLK_Solver(BaseAlgorithm):
         for i in range(A_eq.shape[0]):
             model.constraints.add(
                 sum(
-                    model.x[variable_name_to_idx[variable_names[j]]] * A_eq[i, j]
+                    getattr(model, variable_names[j]) * A_eq[i, j]
                     for j in range(len(variable_names))
                 )
                 == b_eq[i]
@@ -73,9 +87,9 @@ class GPLK_Solver(BaseAlgorithm):
         results = solver.solve(model)
 
         return {
-            variable_name_to_idx[variable_names[i]]: model.x[
-                variable_name_to_idx[variable_names[i]]
-            ].value
+            variable_name_to_idx[variable_names[i]]: getattr(
+                model, variable_names[i]
+            ).value
             for i in range(len(variable_names))
         }
 

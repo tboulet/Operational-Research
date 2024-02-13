@@ -16,7 +16,7 @@ do_tqdm : False
 # Defaults sub-configs and other Hydra config.
 defaults:
   - _self_
-  - algo : lp_round
+  - algo : gplk
   - problem : vmp
   - override hydra/hydra_logging: disabled  
   - override hydra/job_logging: disabled 
