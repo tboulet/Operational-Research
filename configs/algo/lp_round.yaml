@@ -1,0 +1,7 @@
+name: Linear Programming With Rounding
+config:
+  n_checks_max : 10000
+  stop_if_sol_found : True
+
+  # The search method to use, either random or random_without_replacement
+  search_method : random_without_replacement
