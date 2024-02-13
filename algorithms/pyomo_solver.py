@@ -10,8 +10,8 @@ from src.pyomo_utils import (
 )
 
 
-class GPLK_Solver(BaseAlgorithm):
-    """A solver that uses Pyomo and the GPLK solver to solve any MILP problem.
+class PyomoSolver(BaseAlgorithm):
+    """A solver that uses Pyomo a solver for MILP problems.
     This algorithm provides probably a lower bound on any solution other algorithms may find.
     """
 
@@ -26,7 +26,7 @@ class GPLK_Solver(BaseAlgorithm):
             b,
             A_eq,
             b_eq,
-            variable_types,  # TODO : include this in the problem
+            variable_types,
             variable_bounds,
             sense,
         ) = self.problem.get_linear_formulation()
