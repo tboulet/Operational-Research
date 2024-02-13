@@ -1,0 +1,22 @@
+name: VM Placement
+config:
+  n_servers : 50
+  n_vms : 300
+  n_servers_solution : 35
+  ressources:
+    cpu:
+      vm_distribution: uniform
+      vm_max: 128
+      vm_min: 64
+    memory:
+      vm_distribution: uniform
+      vm_max: 32
+      vm_min: 4
+    disk:
+      vm_distribution: uniform
+      vm_max : 4000
+      vm_min : 1000
+  capacity_bonus_servers_solution_frac: 0.1
+  capacity_malus_other_servers_frac: 0.9
+  relax_unique_assignment_constraint: False
+  verbose : 1
