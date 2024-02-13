@@ -29,6 +29,9 @@ class VMPlacementProblem(BaseOptimizationProblem):
         self.n_servers = config["n_servers"]
         self.n_vms = config["n_vms"]
         self.n_servers_solution = config["n_servers_solution"]
+        assert (
+            self.n_servers_solution <= self.n_servers
+        ), "n_servers_solution must be inferior or equal to n_servers"
         self.ressources: Dict[int, Dict[str, Union[str, float, int]]] = config[
             "ressources"
         ]
@@ -108,18 +111,23 @@ class VMPlacementProblem(BaseOptimizationProblem):
             **server_solution_index_to_server_capacity,
             **server_other_index_to_server_capacity,
         }
-        
+
         # Compute the optimal solution value (can be only an upper bound if malus too low or bonus too high)
-        self.n_servers_solution_non_null = sum(   # count the number of solution server will non fully empty capacities.
-            [
-                1
-                for i in range(self.n_servers_solution)
-                if sum(self.server_index_to_server_capacity[i].values()) > 0
-            ]
+        self.n_servers_solution_non_null = (
+            sum(  # count the number of solution server will non fully empty capacities.
+                [
+                    1
+                    for i in range(self.n_servers_solution)
+                    if sum(self.server_index_to_server_capacity[i].values()) > 0
+                ]
+            )
         )
         if self.verbose >= 1:
             print("Servers capacities : ", self.server_index_to_server_capacity)
-            print("Optimal solution value (or upper bound) : ", self.n_servers_solution_non_null)
+            print(
+                "Optimal solution value (or upper bound) : ",
+                self.n_servers_solution_non_null,
+            )
 
         # Compute linear formulation
         (
@@ -215,6 +223,8 @@ class VMPlacementProblem(BaseOptimizationProblem):
         Returns:
             Dict[int, Dict[str, int]]: the mapping of servers to their capacities
         """
+        if len(server_index_to_server_capacity) == 0:
+            return server_index_to_server_capacity
         ressource_names = next(iter(server_index_to_server_capacity.values())).keys()
         for i in server_index_to_server_capacity.keys():
             for ressource_name in ressource_names:
@@ -390,6 +400,7 @@ class VMPlacementProblem(BaseOptimizationProblem):
         """
         print("\nApplying solution to the VM placement problem :")
         used_servers: Dict[int, Dict[str, Union[int, float, List[int]]]] = {}
+        unassigned_vms = set(range(self.n_vms))
         isFeasible = True
 
         # Check if the solution is feasible and compute the used servers and ressources
@@ -408,15 +419,24 @@ class VMPlacementProblem(BaseOptimizationProblem):
                         ][resource]
                         if used_servers[i][resource] < 0:
                             isFeasible = False
+                    # Remove the VM from the list of unassigned VMs
+                    unassigned_vms.discard(j)
+        if len(unassigned_vms) > 0:
+            isFeasible = False
 
         # Print the results
-        for i, host_data in used_servers.items():
-            print(f"Host {i} is used")
-            print(f"  - Assigned VMs: {host_data['assigned_vms']}")
-            for resource, value in host_data.items():
-                if resource not in ["host_id", "assigned_vms"]:
-                    print(
-                        f"  - {resource} used: {self.server_index_to_server_capacity[i][resource] - value}/{self.server_index_to_server_capacity[i][resource]}"
-                    )
-        print("Upper bound on the objective value : ", self.n_servers_solution_non_null)
+        if self.verbose >= 1:
+            for i, host_data in used_servers.items():
+                print(f"Host {i} is used")
+                print(f"  - Assigned VMs: {host_data['assigned_vms']}")
+                for resource, value in host_data.items():
+                    if resource not in ["host_id", "assigned_vms"]:
+                        print(
+                            f"  - {resource} used: {self.server_index_to_server_capacity[i][resource] - value}/{self.server_index_to_server_capacity[i][resource]}"
+                        )
+            print("Unassigned VMs: ", unassigned_vms)
+            print(
+                "Upper bound on the objective value was: ",
+                self.n_servers_solution_non_null,
+            )
         return isFeasible, len(used_servers)
