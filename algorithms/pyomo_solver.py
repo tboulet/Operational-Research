@@ -83,7 +83,7 @@ class PyomoSolver(BaseAlgorithm):
                 == b_eq[i]
             )
 
-        solver = pyo.SolverFactory("glpk")
+        solver = pyo.SolverFactory(self.config["solver_tag"])
         results = solver.solve(model)
 
         return {
