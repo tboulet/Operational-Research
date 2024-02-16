@@ -22,6 +22,7 @@ class LinearProgrammingWithRounding(BaseAlgorithm):
         self.n_checks_done: int = 0
         self.has_computed_linear_relaxation = False
         self.has_found_feasible_solution = False
+        self.checked_all_combinations = False
         self.lp_solution: np.ndarray = None
         self.best_integer_solution: np.ndarray = None
         self.best_value: float = None
@@ -90,7 +91,11 @@ class LinearProgrammingWithRounding(BaseAlgorithm):
 
         # Method 2 : random search without replacement
         elif self.search_method == "random_without_replacement":
-            integer_solution = self.combinations.pop()
+            if len(self.combinations) == 0:
+                self.checked_all_combinations = True
+                integer_solution = self.lp_solution
+            else:
+                integer_solution = self.combinations.pop()
 
         else:
             raise ValueError(f"Unknown search method {self.search_method}")
@@ -127,6 +132,8 @@ class LinearProgrammingWithRounding(BaseAlgorithm):
             }
 
     def stop_algorithm(self) -> bool:
+        if self.checked_all_combinations:
+            return True
         if self.stop_if_sol_found and self.has_found_feasible_solution:
             return True
         return self.n_checks_done >= self.n_checks_max
