@@ -3,6 +3,9 @@ from typing import Dict, List, Tuple, Union
 import numpy as np
 from problems.base_problem import BaseOptimizationProblem
 
+import pprint
+pp = pprint.PrettyPrinter(indent=4)
+
 
 class VMPlacementProblem(BaseOptimizationProblem):
     """Class for the VM placement problem."""
@@ -54,7 +57,8 @@ class VMPlacementProblem(BaseOptimizationProblem):
             n_vms=self.n_vms, ressources=self.ressources
         )
         if self.verbose >= 1:
-            print("VMs requirements : ", vm_index_to_vm_requirements)
+            print("VMs requirements : ")
+            pp.pprint(vm_index_to_vm_requirements)
 
         # Construct the first n_servers_solution servers by assigning VMs to them
         server_solution_index_to_server_capacity = (
@@ -64,10 +68,8 @@ class VMPlacementProblem(BaseOptimizationProblem):
             )
         )
         if self.verbose >= 2:
-            print(
-                "Optimal servers capacities : ",
-                server_solution_index_to_server_capacity,
-            )
+            print("Optimal servers capacities : ")
+            pp.pprint(server_solution_index_to_server_capacity)
 
         # Add a small bonus to the capacities of the optimal servers
         server_solution_index_to_server_capacity = self.multiply_randomly_server_capacities(
@@ -76,10 +78,8 @@ class VMPlacementProblem(BaseOptimizationProblem):
             min_capacity_multiplier=1,
         )
         if self.verbose >= 2:
-            print(
-                "Optimal servers capacities with bonus : ",
-                server_solution_index_to_server_capacity,
-            )
+            print("Optimal servers capacities with bonus : ")
+            pp.pprint(server_solution_index_to_server_capacity)
 
         # Construct the last n_servers-n_servers_solution servers by assigning creating "inferior copies" of the first servers
         server_other_index_to_server_capacity = {}
@@ -89,7 +89,8 @@ class VMPlacementProblem(BaseOptimizationProblem):
                 server_solution_index_to_server_capacity[i_serv_solution].copy()
             )
         if self.verbose >= 2:
-            print("Other servers capacities : ", server_other_index_to_server_capacity)
+            print("Other servers capacities : ")
+            pp.pprint(server_other_index_to_server_capacity)
 
         # Add a malus to the capacities of the other servers
         server_other_index_to_server_capacity = (
@@ -100,10 +101,8 @@ class VMPlacementProblem(BaseOptimizationProblem):
             )
         )
         if self.verbose >= 2:
-            print(
-                "Other servers capacities with malus : ",
-                server_other_index_to_server_capacity,
-            )
+            print("Other servers capacities with malus : ")
+            pp.pprint(server_other_index_to_server_capacity)
 
         # Save the data
         self.vm_index_to_vm_requirements = vm_index_to_vm_requirements
@@ -123,7 +122,8 @@ class VMPlacementProblem(BaseOptimizationProblem):
             )
         )
         if self.verbose >= 1:
-            print("Servers capacities : ", self.server_index_to_server_capacity)
+            print("Servers capacities : ")
+            pp.pprint(self.server_index_to_server_capacity)
             print(
                 "Optimal solution value (or upper bound) : ",
                 self.n_servers_solution_non_null,

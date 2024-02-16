@@ -21,20 +21,20 @@ This problem consist of placing a set of VMs on a set of servers, with the goal 
 
 # Problem Generation
 
-The VMP instances are generated artificially. The VM data is generated following random distributions (uniform, constant...) that can be defined in the `configs/problem/<problem tag>.yaml` files.
+The VMP instances are generated artificially. The VM data is generated following random distributions (uniform, constant...) that can be defined in the `configs/problem/<problem tag>.yaml` files, where `<problem tag>` is the tag of the VMP variation problem you want to generate. For example, for the default VMP problem, the file is `configs/problem/vmp.yaml`.
 
 The server data is generated from the VM data, which allows the problem to be feasible and provides an almost-lower bound on the optimal solution. In details, it does the following :
 
-- generate the m VMs
-- group those VMs in n-k groups, with k >= n//2
-- generate n-k servers (the optimal servers) whose capacities are the sum of the requirements of those matrix, plus a small (stochastic) bonus
-- generate k other servers, each of them being 'altered copies' from one of the optimal servers, with capacities reduced by a (stochastic) malus.
+- generate the m VMs following configured distributions
+- group those VMs in $k$ groups, with $k \lt n//2$
+- generate $k$ servers (the optimal servers) whose capacities are the sum of the requirements of those matrix, plus a small (stochastic) bonus
+- generate $n-k$ other servers, each of them being 'altered copies' from one of the optimal servers, with capacities reduced by a (stochastic) malus.
 
 This unsure that :
 - the problem is always solvable (by using the initial configuration of the optimal servers for example)
-- the optimal solution's value is at most n-k (the feasible optimal server is an upper bound on the optimal solution)
+- the optimal solution's value is at most $k$ (the feasible optimal server is an upper bound on the optimal solution)
 - if the other server malus is sufficiently high, they become not interesting to pick which ensures that the optimal solution is the feasible optimal server
-- this ensures that the optimal solution value is n-k, if the bonus is sufficiently small and the malus is sufficiently high.
+- this ensures that the optimal solution value is $k$, if the bonus is sufficiently small and the malus is sufficiently high.
 
 The configuration for the problem generation can be found in the `configs/problem/vmp.yaml` file.
 
@@ -48,7 +48,7 @@ python run.py algo=<algo tag> problem=vmp
 
 Where `<algo tag>` is the tag of the algorithm you want to use, and `vmp` is the tag of the problem you want to solve.
 
-For example, for using Pyomo, you can use the following command :
+For example, for using the Pyomo solver, you can use the following command :
 
 ```bash
 python run.py algo=pyo problem=vmp
@@ -89,7 +89,7 @@ It does that until it has found a solution that is integer. It then keep searchi
 
 Note that because there are this algorithm is very slow, because there are $2^{m}$ solutions to test, and that the search is not informed.
 
-It is not guaranteed to give the optimal solution, and even to give a valid solution,, because the problem has no guarantee to have a valid solution in $B(x_{LP}^*,1)$, as you can see in this example :
+It is not guaranteed to give the optimal solution, and even to give a valid solution, because the problem has no guarantee to have a valid solution in $B(x_{LP}^*,1)$, as you can see in this example :
 
 <p align="center">
   <img src="assets/no_integer_solution_in_B1.png" alt="Title" width="60%"/>
@@ -143,6 +143,14 @@ We then have the following constraint for each VM $j$:
 $$\sum_{i=1}^{n} z_{i,j} \leq k$$
 
 If we want each assignment of a VM to the server to be at least equal to a given fraction $\alpha$ of the VM capacity, we simply have to set $\epsilon$ to $\alpha$.
+
+This variant is implemented as the class `problems.vmp_splittable.VMPlacementProblemSplittable` and it's configuration can be found in the `configs/problem/vmp_split.yaml` file.
+
+You can use the following command to solve the problem with this variant (the tag is `vmp_split`):
+
+```bash
+python run.py algo=<algo tag> problem=vmp_split
+```
 
 #### 4) Consider VMs families, each family is given a criticity level between 1 to 3
 
