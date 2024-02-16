@@ -20,6 +20,8 @@ class VMPlacementProblemWithIncomp(VMPlacementProblem):
         """
         self.incomp_vm_indexes : List[List[int]] = config.pop("incomp_vm_indexes")
         super().__init__(config)
+        if len(self.incomp_vm_indexes) == 0:
+            return
         A_incomp = []
         b_incomp = []
         for indexes_incomp_vm in self.incomp_vm_indexes:
