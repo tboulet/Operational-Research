@@ -167,13 +167,37 @@ class VMPlacementProblem(BaseOptimizationProblem):
             Dict[int, Dict[str, int]]: the mapping of VMs to their requirements
         """
         vm_index_to_vm_requirements: Dict[int, Dict[str, int]] = {}
-        for j in range(self.n_vms):
+        for j in range(n_vms):
             vm_index_to_vm_requirements[j] = {}
-            for ressource_name in self.ressources.keys():
-                vm_index_to_vm_requirements[j][ressource_name] = np.random.randint(
-                    self.ressources[ressource_name]["vm_min"],
-                    self.ressources[ressource_name]["vm_max"],
-                )
+            for ressource_name in ressources.keys():
+                if ressources[ressource_name]["vm_distribution"] == "uniform":
+                    vm_index_to_vm_requirements[j][ressource_name] = np.random.randint(
+                        ressources[ressource_name]["vm_min"],
+                        ressources[ressource_name]["vm_max"],
+                    )
+                elif ressources[ressource_name]["vm_distribution"] == "normal":
+                    vm_index_to_vm_requirements[j][ressource_name] = max(
+                        0,
+                        int(
+                            np.random.normal(
+                                ressources[ressource_name]["vm_mean"],
+                                ressources[ressource_name]["vm_std"],
+                            )
+                        ),
+                    )
+                elif ressources[ressource_name]["vm_distribution"] == "exponential":
+                    vm_index_to_vm_requirements[j][ressource_name] = int(
+                        np.random.exponential(ressources[ressource_name]["vm_lambda"])
+                    )
+                elif ressources[ressource_name]["vm_distribution"] == "constant":
+                    vm_index_to_vm_requirements[j][ressource_name] = ressources[
+                        ressource_name
+                    ]["vm_constant"]
+                else:
+                    raise ValueError(
+                        f"Unknown distribution {ressources[ressource_name]['vm_distribution']} for ressource {ressource_name}"
+                    )
+
         return vm_index_to_vm_requirements
 
     def compute_optimal_server_data_from_vm_data(
