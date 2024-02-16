@@ -4,11 +4,11 @@ OR methods for Linear Programming and Integer Programming, with a focus on the V
 
 ## VM Placement Problem
 
-This problem consist of placing a set of VMs on a set of servers, with the goal of minimizing the number of servers used. This is a NP-hard problem, and can be formulated as a Linear Programming problem.
+This problem consist of placing a set of VMs on a set of servers, with the goal of minimizing the number of servers used. This is a NP-hard problem, and can be formulated as a Linear Programming problem, in particular, in it's original form, as a Binary Integer Programming problem.
 
 ## Problem Formulation
 
-- We note $x_{ij}$ the decision variable, which is equal to 1 if the VM $j$ is placed on the server $i$, and 0 otherwise.
+- We note $x_{ij}$ the binary decision variable that is equal to 1 if the VM $j$ is placed on the server $i$, and 0 otherwise.
 - There are $n$ servers and $m$ VMs
 - The goal is to minimize the number of servers used, so we introduce the variable $y_i$ which is equal to 1 if the server $i$ is used, and 0 otherwise. The goal is to minimize the following objective function:
   $$\sum_{i=1}^{n} y_i$$
@@ -25,9 +25,9 @@ This problem consist of placing a set of VMs on a set of servers, with the goal 
 
 This can happen for example if some VM work better if deployed on the same physical machine, or if some VMs should not be deployed on the same physical machine for security reason for example.
 
-In the same-server case, it is equivalent to additionate the two VMs capacities.
+In the same-server case, it is equivalent to additionate the two VMs capacities, i.e. to merge the two VMs into one.
 
-In the different-server case, we have the following constraint : for any *(j,j') pair of uncompatible VMs, and any server $i$:
+In the different-server case, we have the following constraint : for any pair (j,j') of uncompatible VMs, and any server $i$:
 $$x_{i,j} + x_{i,j'} \leq 1$$
 This means that if the VM $j$ is placed on the server $i$, then the VM $j'$ cannot be placed on the same server.
 

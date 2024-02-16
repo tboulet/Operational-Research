@@ -295,7 +295,7 @@ class VMPlacementProblem(BaseOptimizationProblem):
             Dict[int, str]: A dictionary that maps each variable index to its type (either "integer" or "continuous").
             Dict[int, Tuple[float, float]]: A dictionary that maps each variable index to its lower and upper bounds.
         """
-        n_variables = self.n_vms * self.n_servers + self.n_servers
+        self.n_variables = self.n_vms * self.n_servers + self.n_servers
 
         variable_names = {}
         A = []
@@ -319,13 +319,13 @@ class VMPlacementProblem(BaseOptimizationProblem):
             variable_bounds[variable_index] = (0, 1)
 
         # Create the cost vector
-        c = np.zeros(n_variables)
+        c = np.zeros(self.n_variables)
         for i in range(self.n_servers):
             c[self.variable_name_to_variable_index(f"y_{i}")] = 1
 
         # Constraint : each VM j must be assigned
         for j in range(self.n_vms):
-            A_j = [0] * n_variables
+            A_j = [0] * self.n_variables
             for i in range(self.n_servers):
                 A_j[self.variable_name_to_variable_index(f"x_{i}_{j}")] = -1
             # Add the inequality constraint or the equality constraint
@@ -339,7 +339,7 @@ class VMPlacementProblem(BaseOptimizationProblem):
         # Constraint : the sum of the requirement for ressource k of VM of server i must be inferior to the capacity of server i for ressource k
         for i in range(self.n_servers):
             for ressource_name in self.ressources.keys():
-                A_ik = [0] * n_variables
+                A_ik = [0] * self.n_variables
                 for j in range(self.n_vms):
                     A_ik[self.variable_name_to_variable_index(f"x_{i}_{j}")] = (
                         self.vm_index_to_vm_requirements[j][ressource_name]
