@@ -9,7 +9,7 @@ from algorithms.base_algorithm import BaseAlgorithm
 from problems.base_problem import BaseOptimizationProblem
 
 
-class LinearProgrammingWithRounding(BaseAlgorithm):
+class LinearProgrammingWithAroundSearching(BaseAlgorithm):
     """An algorithm that solves the LP relaxation and then rounds the solution to the nearest integer."""
 
     def initialize_algorithm(self, problem: BaseOptimizationProblem) -> None:
@@ -69,7 +69,9 @@ class LinearProgrammingWithRounding(BaseAlgorithm):
             if self.search_method == "random_without_replacement":
                 self.combinations = self.get_floor_or_ceil_combinations(
                     list_float=self.lp_solution,
-                    list_variable_types=[self.variable_types[i] for i in range(len(self.variable_types))],
+                    list_variable_types=[
+                        self.variable_types[i] for i in range(len(self.variable_types))
+                    ],
                     shuffle=True,
                 )
 
@@ -145,7 +147,7 @@ class LinearProgrammingWithRounding(BaseAlgorithm):
         shuffle=True,
     ) -> List[List[int]]:
         """Get all possible combinations of floor and ceil for a list of floats.
-        
+
         Args:
             list_float (List[float]): The list of floats to round.
             variable_types (List[str]): The types of the variables.
@@ -153,18 +155,27 @@ class LinearProgrammingWithRounding(BaseAlgorithm):
         """
         if len(list_float) == 0:
             return [[]]
-        elif int(list_float[0]) == list_float[0] or list_variable_types[0] == "continuous":
+        elif (
+            int(list_float[0]) == list_float[0]
+            or list_variable_types[0] == "continuous"
+        ):
             res = [
                 [int(list_float[0])] + comb
-                for comb in self.get_floor_or_ceil_combinations(list_float[1:], list_variable_types[1:], shuffle=shuffle)
+                for comb in self.get_floor_or_ceil_combinations(
+                    list_float[1:], list_variable_types[1:], shuffle=shuffle
+                )
             ]
         else:
             res = [
                 [int(list_float[0])] + comb
-                for comb in self.get_floor_or_ceil_combinations(list_float[1:], list_variable_types[1:], shuffle=shuffle)
+                for comb in self.get_floor_or_ceil_combinations(
+                    list_float[1:], list_variable_types[1:], shuffle=shuffle
+                )
             ] + [
                 [int(list_float[0]) + 1] + comb
-                for comb in self.get_floor_or_ceil_combinations(list_float[1:], list_variable_types[1:], shuffle=shuffle)
+                for comb in self.get_floor_or_ceil_combinations(
+                    list_float[1:], list_variable_types[1:], shuffle=shuffle
+                )
             ]
         if shuffle:
             random.shuffle(res)
