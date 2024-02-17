@@ -4,6 +4,7 @@ from typing import Dict, Union
 
 import numpy as np
 
+EPSILON = 1e-6
 
 def to_integer(x: Union[int, float, str, None]) -> Union[int, None]:
     if isinstance(x, int) or isinstance(x, float):

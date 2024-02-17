@@ -22,6 +22,5 @@ config:
   verbose : 1
 
   # Splittability parameters
-  splittable: True
   n_servers_splittable_max : 3
-  proportion_splittable_min : 0
+  proportion_splittable_min : 0.1

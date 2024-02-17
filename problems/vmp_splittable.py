@@ -5,9 +5,12 @@ from typing import Dict, List, Tuple, Union
 import numpy as np
 from problems.base_problem import BaseOptimizationProblem
 from problems.vmp import VMPlacementProblem
+from src.utils import EPSILON
 
 import pprint
+
 pp = pprint.PrettyPrinter(indent=4)
+
 
 class VMPlacementProblemSplittable(VMPlacementProblem):
     """A variant of the VM placement problem with relaxation of the constraint of placing a VM on a single server.
@@ -22,9 +25,15 @@ class VMPlacementProblemSplittable(VMPlacementProblem):
         It then relax the integer constraints on the variables, introduce new binary variables z_i_j for each VM j and server i (which represents whether x_i_j is non-zero).
         It finally adds the constraints to ensure that the load on each server is at least alpha and that the VMs are placed on at most k servers.
         """
-        self.splittable: List[List[int]] = config.pop("splittable")
         self.n_servers_splittable_max = config.pop("n_servers_splittable_max")
         self.proportion_splittable_min = config.pop("proportion_splittable_min")
+
+        assert (
+            self.n_servers_splittable_max > 0
+        ), "The maximum number of servers on which a VM can be placed must be positive"
+        assert (
+            self.proportion_splittable_min <= 1
+        ), "The minimum proportion of the load of a VM that can be placed on a server must be inferior to 1"
 
         if self.proportion_splittable_min <= 0:
             self.alpha = sys.float_info.epsilon
@@ -189,6 +198,14 @@ class VMPlacementProblemSplittable(VMPlacementProblem):
                 A.append(row)
                 b.append(0)
 
+        # Constraint : the sum of the z_i_j variables for a given VM j must be inferior to k
+        for j in range(self.n_vms):
+            row = [0] * self.n_variables
+            for i in range(self.n_servers):
+                row[self.variable_name_to_variable_index(f"z_{i}_{j}")] = 1
+            A.append(row)
+            b.append(self.n_servers_splittable_max)
+
         return (
             variable_names,
             c,
@@ -224,7 +241,7 @@ class VMPlacementProblemSplittable(VMPlacementProblem):
         for j in range(self.n_vms):
             for i in range(self.n_servers):
                 x_i_j = solution[self.variable_name_to_variable_index(f"x_{i}_{j}")]
-                if x_i_j > 10 ** -6 and x_i_j < self.alpha:
+                if x_i_j > EPSILON and x_i_j < self.alpha:
                     isFeasible = False
                     if self.verbose >= 1:
                         print(
@@ -241,11 +258,15 @@ class VMPlacementProblemSplittable(VMPlacementProblem):
                         used_servers[i][resource] -= (
                             self.vm_index_to_vm_requirements[j][resource] * x_i_j
                         )
-                        if used_servers[i][resource] < 0:
+                        if used_servers[i][resource] < -EPSILON:
                             isFeasible = False
+                            if self.verbose >= 1:
+                                print(
+                                    f"Non feasability : server {i} can't handle the load of VM {j} for resource {resource}"
+                                )
                     # Remove the VM from the list of unassigned VMs
                     assignment_percentage_vm[j] += x_i_j
-        if any(assignment_percentage_vm[j] < 1 - 10 ** -6 for j in range(self.n_vms)):
+        if any(assignment_percentage_vm[j] < 1 - EPSILON for j in range(self.n_vms)):
             isFeasible = False
             if self.verbose >= 1:
                 print(
@@ -256,7 +277,7 @@ class VMPlacementProblemSplittable(VMPlacementProblem):
         if self.verbose >= 1:
             for i, host_data in used_servers.items():
                 print(f"Host {i} is used")
-                vm_assignment_repr = ''
+                vm_assignment_repr = ""
                 for x_i_j, j in host_data["assigned_vms"]:
                     if x_i_j == 1:
                         vm_assignment_repr += f"{j}, "

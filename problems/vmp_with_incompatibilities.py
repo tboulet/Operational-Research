@@ -18,15 +18,19 @@ class VMPlacementProblemWithIncomp(VMPlacementProblem):
         generate the linear formulation of the problem.
         It then adds the incompatibility constraints to the linear formulation.
         """
-        self.incomp_vm_indexes : List[List[int]] = config.pop("incomp_vm_indexes")
-        super().__init__(config)
+        assert "incomp_vm_indexes" in config, "The incomp_vm_indexes argument is missing from the config"
+        config_vmp_with_family = config.copy()
+        self.incomp_vm_indexes : List[List[int]] = config_vmp_with_family.pop("incomp_vm_indexes")
+        super().__init__(config=config_vmp_with_family)
         if len(self.incomp_vm_indexes) == 0:
             return
         A_incomp = []
         b_incomp = []
         for indexes_incomp_vm in self.incomp_vm_indexes:
             for j1, j2 in itertools.combinations(indexes_incomp_vm, 2):
-                assert j1 != j2, "Two same VMs cannot be incompatibles"
+                assert j1 != j2, f"Two same VMs cannot be incompatibles, but {j1} was found to be incompatibles with itself"
+                assert j1 in range(self.n_vms), f"VM index {j1} is not valid"
+                assert j2 in range(self.n_vms), f"VM index {j2} is not valid"
                 # Incompatibility constraints: j1 and j2 cannot be placed on the same server
                 # This translates to : for all server i, x_i_j1 + x_i_j2 <= 1
                 for i in range(self.n_servers):

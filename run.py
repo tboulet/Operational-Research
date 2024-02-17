@@ -75,17 +75,25 @@ def main(config: DictConfig):
         print(f"\nIteration {iteration}...")
         # Get the algo result
         with RuntimeMeter("optimize") as rm:
-            solution = algo.run_one_iteration()
-            print("Solution computed.")
+            isFeasible, solution = algo.run_one_iteration()
+            if not isFeasible:
+                print("No solution found.")
+            else:
+                print("Solution found.")
 
         # Apply the solution to the problem
         with RuntimeMeter("apply_solution") as rm:
-            isFeasible, objective_value = problem.apply_solution(solution)
-            print()
-            print(f"Objective value at iteration {iteration}: {objective_value}")
-            print(f"Is feasible at iteration {iteration}: {isFeasible}")
-            metrics["objective_value"] = objective_value
+            if isFeasible:
+                isFeasible, objective_value = problem.apply_solution(solution)
+                print()
+                print(f"Objective value at iteration {iteration}: {objective_value}")
+                print(f"Is feasible at iteration {iteration}: {isFeasible}")
+                metrics["objective_value"] = objective_value
+            else:
+                print()
+                print(f"No solution found at iteration {iteration}.")
             metrics["is_feasible"] = int(isFeasible)
+                
 
         # Log metrics.
         with RuntimeMeter("log") as rm:

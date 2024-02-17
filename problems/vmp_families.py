@@ -20,6 +20,9 @@ class VMPlacementProblemWithIncompFamilies(VMPlacementProblemWithIncomp):
         incomp_vm_indexes: List[List[int]] = []
         for family_indexes in self.incomp_family_indexes:
             for (fam_key_1, fam_key_2) in itertools.combinations(family_indexes, 2):
+                assert fam_key_1 in self.families_of_vms, f"Family index {fam_key_1} is not valid in families_of_vms"
+                assert fam_key_2 in self.families_of_vms, f"Family index {fam_key_2} is not valid in families_of_vms"
+                assert fam_key_1 != fam_key_2 or len(self.families_of_vms[fam_key_1]) == 0, f"A family cannot be incompatible with itself unless it is empty"
                 for vm_index_1 in self.families_of_vms[fam_key_1]:
                     for vm_index_2 in self.families_of_vms[fam_key_2]:
                         incomp_vm_indexes.append([vm_index_1, vm_index_2])

@@ -1,9 +1,13 @@
 from collections import defaultdict
+from tabnanny import verbose
 from typing import Dict, List, Tuple, Union
 import numpy as np
 from problems.base_problem import BaseOptimizationProblem
 
 import pprint
+
+from src.utils import EPSILON
+
 pp = pprint.PrettyPrinter(indent=4)
 
 
@@ -32,9 +36,6 @@ class VMPlacementProblem(BaseOptimizationProblem):
         self.n_servers = config["n_servers"]
         self.n_vms = config["n_vms"]
         self.n_servers_solution = config["n_servers_solution"]
-        assert (
-            self.n_servers_solution <= self.n_servers
-        ), "n_servers_solution must be inferior or equal to n_servers"
         self.ressources: Dict[int, Dict[str, Union[str, float, int]]] = config[
             "ressources"
         ]
@@ -48,6 +49,29 @@ class VMPlacementProblem(BaseOptimizationProblem):
             "relax_unique_assignment_constraint"
         ]
         self.verbose: int = config["verbose"]
+
+        # Asserts
+        assert (
+            isinstance(self.n_servers, int) and self.n_servers > 0
+        ), "n_servers must be a positive integer"
+        assert (
+            isinstance(self.n_vms, int) and self.n_vms > 0
+        ), "n_vms must be a positive integer"
+        assert (
+            isinstance(self.n_servers_solution, int) and self.n_servers_solution > 0
+        ), "n_servers_solution must be a positive integer"
+        assert (
+            self.n_servers_solution <= self.n_servers
+        ), "n_servers_solution must be inferior or equal to n_servers"
+        assert (
+            isinstance(self.verbose, int) and self.verbose >= 0
+        ), "verbose must be a non-negative integer"
+        assert isinstance(
+            self.capacity_bonus_servers_solution_frac, (float, int)
+        ), "capacity_bonus_servers_solution_frac must be a float or int"
+        assert isinstance(
+            self.capacity_malus_other_servers_frac, float
+        ), "capacity_malus_other_servers_frac must be a float"
 
         if self.verbose >= 1:
             print("\nGenerating a VM placement problem...")
@@ -171,11 +195,25 @@ class VMPlacementProblem(BaseOptimizationProblem):
             vm_index_to_vm_requirements[j] = {}
             for ressource_name in ressources.keys():
                 if ressources[ressource_name]["vm_distribution"] == "uniform":
+                    assert (
+                        ("vm_min" in ressources[ressource_name])
+                        and ("vm_max" in ressources[ressource_name])
+                        and (
+                            ressources[ressource_name]["vm_min"]
+                            <= ressources[ressource_name]["vm_max"]
+                        )
+                    ), f"vm_min and vm_max must be defined and vm_min <= vm_max for ressource {ressource_name}"
                     vm_index_to_vm_requirements[j][ressource_name] = np.random.randint(
                         ressources[ressource_name]["vm_min"],
                         ressources[ressource_name]["vm_max"],
                     )
                 elif ressources[ressource_name]["vm_distribution"] == "normal":
+                    assert (
+                        ("vm_mean" in ressources[ressource_name])
+                        and ("vm_std" in ressources[ressource_name])
+                        and (ressources[ressource_name]["vm_std"] > 0)
+                    ), f"vm_mean and vm_std must be defined for ressource {ressource_name} and vm_std > 0"
+                    
                     vm_index_to_vm_requirements[j][ressource_name] = max(
                         0,
                         int(
@@ -186,10 +224,17 @@ class VMPlacementProblem(BaseOptimizationProblem):
                         ),
                     )
                 elif ressources[ressource_name]["vm_distribution"] == "exponential":
+                    assert (
+                        ("vm_lambda" in ressources[ressource_name])
+                        and (ressources[ressource_name]["vm_lambda"] > 0)
+                    ), f"vm_lambda must be defined for ressource {ressource_name} and vm_lambda > 0"
                     vm_index_to_vm_requirements[j][ressource_name] = int(
                         np.random.exponential(ressources[ressource_name]["vm_lambda"])
                     )
                 elif ressources[ressource_name]["vm_distribution"] == "constant":
+                    assert (
+                        ("vm_constant" in ressources[ressource_name])
+                    ), f"vm_constant must be defined for ressource {ressource_name}"
                     vm_index_to_vm_requirements[j][ressource_name] = ressources[
                         ressource_name
                     ]["vm_constant"]
@@ -441,7 +486,7 @@ class VMPlacementProblem(BaseOptimizationProblem):
                         used_servers[i][resource] -= self.vm_index_to_vm_requirements[
                             j
                         ][resource]
-                        if used_servers[i][resource] < 0:
+                        if used_servers[i][resource] < -EPSILON:
                             isFeasible = False
                     # Remove the VM from the list of unassigned VMs
                     unassigned_vms.discard(j)

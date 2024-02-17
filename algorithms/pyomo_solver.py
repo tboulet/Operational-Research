@@ -86,15 +86,14 @@ class PyomoSolver(BaseAlgorithm):
         solver = pyo.SolverFactory(self.config["solver_tag"])
         results = solver.solve(model)
         if results.solver.termination_condition != pyo.TerminationCondition.optimal:
-            print(
-                f"WARNING : Pyomo solver did not find an optimal solution: {results.solver.termination_condition}"
-            )
-        return {
-            variable_name_to_idx[variable_names[i]]: getattr(
-                model, variable_names[i]
-            ).value
-            for i in range(len(variable_names))
-        }
+            return False, None
+        else:
+            return True, {
+                variable_name_to_idx[variable_names[i]]: getattr(
+                    model, variable_names[i]
+                ).value
+                for i in range(len(variable_names))
+            }
 
     def stop_algorithm(self) -> bool:
         return True
