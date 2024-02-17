@@ -112,6 +112,8 @@ In the different-server case, we have the following constraint : for any pair (j
 $$x_{i,j} + x_{i,j'} \leq 1$$
 This means that if the VM $j$ is placed on the server $i$, then the VM $j'$ cannot be placed on the same server.
 
+This variant is implemented as the class `problems.vmp_with_incompatibilities.VMPlacementProblemWithIncomp` and it's configuration can be found in the `configs/problem/vmp_incomp.yaml` file.
+
 You can use the following command to solve the problem with this variant (the tag is `vmp_incomp`):
 
 ```bash
@@ -122,11 +124,16 @@ python run.py algo=<algo tag> problem=vmp_incomp
 
 The case where all servers have not the same capacities is the default case in this implementation.
 
-The case where all servers are identical and are initially empty can be obtained by associating all server capacities to the max capacities. You can obtain this by setting the `problem` tag to `vmp_empty` in the command line :
+The case where all servers are identical and are initially empty can be obtained by associating all server capacities to the max capacities. 
+
+This variant is implemented as the class `problems.vmp_splittable.VMPlacementProblemSplittable` and it's configuration can be found in the `configs/problem/vmp_split.yaml` file.
+
+You can use the following command to solve the problem with this variant (the tag is `vmp_empty`):
 
 ```bash
 python run.py algo=<algo tag> problem=vmp_empty
 ```
+
 
 
 #### 3) VMs could be splitted over several servers
@@ -154,7 +161,18 @@ python run.py algo=<algo tag> problem=vmp_split
 
 #### 4) Consider VMs families, each family is given a criticity level between 1 to 3
 
-In this case, it is imperative to assign the VMs of high criticity, and less important to assign the VMs of low criticity. This can be done as a soft or hard way.
+In this case, the VMs are split in three families. VMs from the family 1 need ot be isolated from VMs from the family 3, and VMs from the family 2 are free.
+
+This can be considered as a spcial case of the incompatibility case : for each VM $j$ from the family 1, and each VM $j'$ from the family 3, and any server $i$:
+$$x_{i,j} + x_{i,j'} \leq 1$$
+
+This variant is implemented (with more flexibility on the family incompatibilities) as the class `problems.vmp_families.VMPlacementProblemWithIncompFamilies`, which is a subclass of the `VMPlacementProblemWithIncomp` class and it's configuration can be found in the `configs/problem/vmp_families.yaml` file.
+
+You can use the following command to solve the problem with this variant (the tag is `vmp_families`):
+
+```bash
+python run.py algo=<algo tag> problem=vmp_families
+```
 
 #### 5) Online VMP
 
