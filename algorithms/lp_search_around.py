@@ -1,6 +1,6 @@
 import random
 from re import L
-from typing import Dict, List, Set, Union
+from typing import Dict, List, Set, Tuple, Union
 import numpy as np
 
 from scipy.optimize import linprog
@@ -24,12 +24,15 @@ class LinearProgrammingWithAroundSearching(BaseAlgorithm):
         self.has_found_feasible_solution = False
         self.checked_all_combinations = False
         self.lp_solution: np.ndarray = None
+        self.success: bool = None
         self.best_integer_solution: np.ndarray = None
         self.best_value: float = None
         self.combinations: Set[List[int]] = set()
 
-    def run_one_iteration(self) -> Dict[int, Union[int, float]]:
-
+    def run_one_iteration(self) -> Tuple[
+        bool,
+        Dict[int, Union[int, float]],
+    ]:
         # Compute the linear relaxation's solution
         if not self.has_computed_linear_relaxation:
             # Get the linear formulation
@@ -49,7 +52,7 @@ class LinearProgrammingWithAroundSearching(BaseAlgorithm):
                 self.variable_bounds[i] for i in range(len(self.variable_bounds))
             ]
             # Solve the linear relaxation
-            self.lp_solution, self.value_lp_relaxation, success, status = (
+            self.lp_solution, self.value_lp_relaxation, self.success, status = (
                 self.solve_linear_formulation(
                     c=self.c,
                     A=self.A,
@@ -60,10 +63,12 @@ class LinearProgrammingWithAroundSearching(BaseAlgorithm):
                     sense=self.sense,
                 )
             )
-            if not success:
-                raise ValueError(
-                    f"Linear relaxation could not be solved. Status: {status}"
+            if not self.success:
+                print(
+                    f"WARNING : Linear relaxation could not be solved. Status: {status}"
                 )
+                return False, None
+            
             self.has_computed_linear_relaxation = True
             # Compute the combinations of floor and ceil for each variable
             if self.search_method == "random_without_replacement":
@@ -123,12 +128,13 @@ class LinearProgrammingWithAroundSearching(BaseAlgorithm):
         # Return the best solution found so far (or the LP solution if no feasible solution has been found yet)
         self.n_checks_done += 1
         if self.has_found_feasible_solution:
-            return {
+            return True, {
                 variable_idx: self.best_integer_solution[variable_idx]
                 for variable_idx in range(len(integer_solution))
             }
         else:
-            return {
+            # We still return True (we claim to have found a solution, but it is probably not feasible) and the LP solution
+            return True, {
                 variable_idx: self.lp_solution[variable_idx]
                 for variable_idx in range(len(integer_solution))
             }

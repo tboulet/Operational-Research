@@ -22,13 +22,19 @@ class BaseAlgorithm(ABC):
         """
 
     @abstractmethod
-    def run_one_iteration(self) -> Dict[int, Union[int, float]]:
+    def run_one_iteration(self) -> Tuple[
+        bool,
+        Dict[int, Union[int, float]],
+    ]:
         """Run one iteration of the algorithm (if the algorithm can be decomposed into iterations).
         At the end of the iteration, the algorithm should be able to propose an (possibly suboptimal or even unvalid) solution to the VMP problem.
 
-        The running of each algorithm is atomized in iteration so that its possible to track the evolution of the solution performance over time.
+        If the algorithm has found no valid solution, it should return (False, Anything), for example (False, None).
+        
+        The running of each algorithm is atomized in iteration so that its possible to track the evolution of the solution performance over time if needed.
 
         Returns:
+            bool: A boolean that indicates if the solution is feasible according to the algorithm.
             Dict[int, Union[int, float]]: A dictionary that maps each variable index to its value.
         """
 
