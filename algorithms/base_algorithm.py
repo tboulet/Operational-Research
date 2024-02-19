@@ -30,7 +30,7 @@ class BaseAlgorithm(ABC):
         At the end of the iteration, the algorithm should be able to propose an (possibly suboptimal or even unvalid) solution to the VMP problem.
 
         If the algorithm has found no valid solution, it should return (False, Anything), for example (False, None).
-        
+
         The running of each algorithm is atomized in iteration so that its possible to track the evolution of the solution performance over time if needed.
 
         Returns:
@@ -78,10 +78,10 @@ class BaseAlgorithm(ABC):
             c_modified = c if sense == "minimize" else -c
             res = linprog(
                 c=c_modified,
-                A_ub=A,
-                b_ub=b,
-                A_eq=A_eq,
-                b_eq=b_eq,
+                A_ub=A if A.size > 0 else None,
+                b_ub=b if b.size > 0 else None,
+                A_eq=A_eq if A_eq.size > 0 else None,
+                b_eq=b_eq if b_eq.size > 0 else None,
                 bounds=bounds,
                 method="highs",
             )
@@ -116,15 +116,18 @@ class BaseAlgorithm(ABC):
         """
         value = np.dot(c, x_solution)
         # Check if the solution is in the bounds
-        if np.any(x_solution < np.array([bound[0] for bound in bounds])) or np.any(
-            x_solution > np.array([bound[1] for bound in bounds])
-        ):
-            return False, value
+        for i, (lower_bound, upper_bound) in enumerate(bounds):
+            if lower_bound is not None and x_solution[i] < lower_bound:
+                return False, value
+            if upper_bound is not None and x_solution[i] > upper_bound:
+                return False, value
         # Check if the solution satisfies the inequalities
-        if np.any(np.dot(A, x_solution) > b):
-            return False, value
+        if A.size > 0:
+            if np.any(np.dot(A, x_solution) > b):
+                return False, value
         # Check if the solution satisfies the equalities
-        if np.any(np.dot(A_eq, x_solution) != b_eq):
-            return False, value
+        if A_eq.size > 0:
+            if np.any(np.dot(A_eq, x_solution) != b_eq):
+                return False, value
         # If all the checks are passed, the solution is feasible
         return True, value

@@ -1,4 +1,5 @@
 from collections import defaultdict
+from copy import deepcopy
 from tabnanny import verbose
 from typing import Dict, List, Tuple, Union
 import numpy as np
@@ -36,7 +37,7 @@ class VMPlacementProblem(BaseOptimizationProblem):
         self.n_servers = config["n_servers"]
         self.n_vms = config["n_vms"]
         self.n_servers_solution = config["n_servers_solution"]
-        self.ressources: Dict[int, Dict[str, Union[str, float, int]]] = config[
+        self.ressources: Dict[str, Dict[str, Union[str, float, int]]] = config[
             "ressources"
         ]
         self.capacity_bonus_servers_solution_frac: float = config[
@@ -455,6 +456,12 @@ class VMPlacementProblem(BaseOptimizationProblem):
             self.optimization_sense,
         )
 
+    def get_vm_index_to_vm_requirements(self) -> Dict[int, Dict[str, int]]:
+        return deepcopy(self.vm_index_to_vm_requirements)
+    
+    def get_server_index_to_server_capacity(self) -> Dict[int, Dict[str, int]]:
+        return deepcopy(self.server_index_to_server_capacity)
+    
     def apply_solution(
         self, solution: Dict[int, Union[int, float]]
     ) -> Union[bool, float]:

@@ -25,8 +25,8 @@ The VMP instances are generated artificially. The VM data is generated following
 
 The server data is generated from the VM data, which allows the problem to be feasible and provides an almost-lower bound on the optimal solution. In details, it does the following :
 
-- generate the m VMs following configured distributions
-- group those VMs in $k$ groups, with $k \lt n//2$
+- generate the $m$ VMs following configured distributions
+- group those VMs in $k$ groups, with $k \le n$
 - generate $k$ servers (the optimal servers) whose capacities are the sum of the requirements of those matrix, plus a small (stochastic) bonus
 - generate $n-k$ other servers, each of them being 'altered copies' from one of the optimal servers, with capacities reduced by a (stochastic) malus.
 
@@ -57,17 +57,14 @@ python run.py algo=pyo problem=vmp
 This will print the data generation as well as the solution found by the algorithm.
 
 Algorithms currently implemented are :
-- `pyomo` : formalize the problem under the Pyomo framework and solve it using a MILP solver.
 - `greedy` : a greedy algorithm that places the VMs on the servers in a greedy way, by placing the VM on the server with the most available resources.
 - `random` : a random algorithm that places the VMs on the servers in a random way until it has found a solution.
 - `lp_around` : solve the LP relaxation of the problem, and search randomly around it the valid integer solution.
+- `pyomo` : formalize the problem under the Pyomo framework and solve it using a MILP solver.
 
 
 # Algorithms
 
-### Pyomo
-
-This is not an algorithm made by myself, but simply an implementation of the problem under the Pyomo framework, which is a Python library for optimization problems. This very efficient commercial library gives lower bound on the solution of any algorithms I will certainly implement, and is much faster.
 
 ### Greedy
 
@@ -87,7 +84,7 @@ This algorithm solve the relaxation of the problem (using the scipy.optimize.lin
 
 It does that until it has found a solution that is integer. It then keep searching to eventually improve the solution's objective value.
 
-Note that because there are this algorithm is very slow, because there are $2^{m}$ solutions to test, and that the search is not informed.
+Note that because there are this algorithm is very slow, because there are $O(2^{m})$ solutions to test, and that the search is not informed.
 
 It is not guaranteed to give the optimal solution, and even to give a valid solution, because the problem has no guarantee to have a valid solution in $B(x_{LP}^*,1)$, as you can see in this example :
 
@@ -98,6 +95,10 @@ It is not guaranteed to give the optimal solution, and even to give a valid solu
 Improvements :
 - It can do slightly better by sampling the solutions without replacement. 
 - If no solutions are found in the ball, it can increase the radius of the ball and try again.
+
+### Pyomo
+
+This is not an algorithm made by myself, but simply an implementation of the problem under the Pyomo framework, which is a Python library for optimization problems. This very efficient commercial library gives lower bound on the solution of any algorithms I will certainly implement, and is much faster.
 
 
 # VM Placement Problem variants
@@ -173,7 +174,3 @@ You can use the following command to solve the problem with this variant (the ta
 ```bash
 python run.py algo=<algo tag> problem=vmp_families
 ```
-
-#### 5) Online VMP
-
-In this case, the VMs are arriving one by one, and the goal is to place them as they arrive. This is a case of online optimization, and the goal is to minimize the number of migrations.

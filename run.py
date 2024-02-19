@@ -122,7 +122,7 @@ def main(config: DictConfig):
         # Stop the run if the optimization time has exceeded the maximum time
         if rm.get_stage_runtime("optimize") > config["max_runtime_seconds"]:
             print(
-                f"\nStopping run because the optimization time {rm.get_stage_runtime('optimize')} has exceeded the maximum time of {config['max_runtime']}"
+                f"\nStopping run because the optimization time {rm.get_stage_runtime('optimize')} has exceeded the maximum time of {config['max_runtime_seconds']}"
             )
             break
 
