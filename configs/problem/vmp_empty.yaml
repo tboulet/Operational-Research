@@ -1,8 +1,8 @@
 name: VM Placement Empty Servers
 config:
-  n_servers : 10
-  n_vms : 20
-  n_servers_solution : 6
+  n_servers : 5
+  n_vms : 10
+  n_servers_solution : 4
   ressources:
     cpu:
       vm_distribution: uniform
@@ -16,7 +16,7 @@ config:
       vm_distribution: uniform
       vm_max : 4000
       vm_min : 1000
-  capacity_bonus_servers_solution_frac: 0.1
-  capacity_malus_other_servers_frac: 0.9
+  capacity_bonus_servers_solution_frac: 0
+  capacity_malus_other_servers_frac: 0
   relax_unique_assignment_constraint: False
   verbose : 1

@@ -55,7 +55,7 @@ def main(config: DictConfig):
     problem = ProblemClass(config=config["problem"]["config"])
 
     # Initialize loggers
-    run_name = f"[{solver_name}]_[{task_name}]_{datetime.datetime.now().strftime('%dth%mmo_%Hh%Mmin%Ss')}_seed{np.random.randint(1000)}"
+    run_name = f"[{solver_name}]_[{task_name}]_{datetime.datetime.now().strftime('%dth%mmo_%Hh%Mmin%Ss')}_seed{seed}"
     print(f"\nStarting run {run_name}")
     metrics = {}
     if do_wandb:
@@ -103,7 +103,7 @@ def main(config: DictConfig):
             metrics["iteration"] = iteration
             if do_wandb:
                 runtime_in_ms = int(rm.get_stage_runtime("optimize") * 1000)
-                wandb.log(metric_result, step=runtime_in_ms)
+                wandb.log(metrics, step=runtime_in_ms)
             if do_tb:
                 for metric_name, metric_result in metrics.items():
                     tb_writer.add_scalar(

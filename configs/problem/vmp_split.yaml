@@ -1,8 +1,8 @@
 name: VM Placement Splittable
 config:
-  n_servers : 10
-  n_vms : 20
-  n_servers_solution : 6
+  n_servers : 5
+  n_vms : 10
+  n_servers_solution : 4
   ressources:
     cpu:
       vm_distribution: uniform

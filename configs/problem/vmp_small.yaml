@@ -1,7 +1,7 @@
 name: VM Placement
 config:
-  n_servers : 4
-  n_vms : 7
+  n_servers : 3
+  n_vms : 5
   n_servers_solution : 2
   ressources:
     cpu:

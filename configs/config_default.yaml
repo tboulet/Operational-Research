@@ -1,13 +1,11 @@
 # Hyperparameters
 max_runtime_seconds : 60
 n_iterations_max : inf
-seed : 11111
 
 # Logging
-do_wandb : False
+do_wandb : True
 wandb_config:
-  project : wandb_project_example
-  entity : wandb_entity_example
+  project : operational_research
 do_tb : True
 do_cli : True
 do_tqdm : False
@@ -16,7 +14,7 @@ do_tqdm : False
 # Defaults sub-configs and other Hydra config.
 defaults:
   - _self_
-  - algo : lp_round
+  - algo : pyo
   - problem : vmp
   - override hydra/hydra_logging: disabled  
   - override hydra/job_logging: disabled 

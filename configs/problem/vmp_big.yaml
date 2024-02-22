@@ -1,8 +1,8 @@
 name: VM Placement
 config:
-  n_servers : 50
-  n_vms : 300
-  n_servers_solution : 35
+  n_servers : 10
+  n_vms : 20
+  n_servers_solution : 6
   ressources:
     cpu:
       vm_distribution: uniform

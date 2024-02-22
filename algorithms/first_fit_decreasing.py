@@ -3,6 +3,7 @@ from typing import Dict, Tuple, Union
 from algorithms.base_algorithm import BaseAlgorithm
 from problems.base_problem import BaseOptimizationProblem
 from problems.vmp import VMPlacementProblem
+from src.sort_servers import get_sorted_server_items
 
 
 class FirstFitDecreasingVMPAlgorithm(BaseAlgorithm):
@@ -14,40 +15,20 @@ class FirstFitDecreasingVMPAlgorithm(BaseAlgorithm):
         self.problem = problem
 
     def run_one_iteration(self) -> Tuple[bool, Dict[int, int]]:
+        
+        # Get the virtual machines requirements and the servers capacities
         vm_index_to_vm_requirements = self.problem.get_vm_index_to_vm_requirements()
         server_index_to_server_capacity = (
             self.problem.get_server_index_to_server_capacity()
         )
 
         # Sort the server by decreasing average normalized capacity
-        name_ressource_to_max_capacity = {
-            name: max(
-                [
-                    server_capacities[name]
-                    for server_capacities in server_index_to_server_capacity.values()
-                ]
-            )
-            for name in self.problem.ressources
-        }
-        server_index_to_server_normalized_capacity = {
-            server_index: {
-                name: server_capacities[name] / name_ressource_to_max_capacity[name]
-                for name in self.problem.ressources
-            }
-            for server_index, server_capacities in server_index_to_server_capacity.items()
-        }
-        server_index_to_server_averaged_normalized_capacity = {
-            server_index: sum(server_capacities.values()) / len(server_capacities)
-            for server_index, server_capacities in server_index_to_server_normalized_capacity.items()
-        }
-        list_server_items_sorted_by_decreasing_average_normalized_capacity = sorted(
-            server_index_to_server_capacity.items(),
-            key=lambda server_index_to_server_capacity: server_index_to_server_averaged_normalized_capacity[
-                server_index_to_server_capacity[0]
-            ],
-            reverse=True,
+        list_server_items_sorted_by_decreasing_average_normalized_capacity = get_sorted_server_items(
+            server_index_to_server_capacity=server_index_to_server_capacity,
+            ressources=self.problem.ressources,
         )
 
+        # Try to assign each virtual machine to the first server that can host it
         vm_index_to_server_idx: Dict[int, int] = {}
         for j, vm_requirements in vm_index_to_vm_requirements.items():
             for (
@@ -68,6 +49,7 @@ class FirstFitDecreasingVMPAlgorithm(BaseAlgorithm):
             else:
                 return False, {}
 
+        # Create the solution as a dictionnary of variable index to value
         solution = {}
         for i in range(self.problem.n_servers):
             for j in range(self.problem.n_vms):

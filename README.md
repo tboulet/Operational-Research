@@ -14,9 +14,9 @@ This problem consist of placing a set of VMs on a set of servers, with the goal 
   $$\sum_{i=1}^{n} y_i$$
 - For each ressource $k$ (CPU, RAM, Disk, Network), we note $c_{i,k}$ the capacity of the server $i$ for the ressource $k$, and $a_{j,k}$ the consumption of the VM $j$ for the ressource $k$.
 - Any server cannot be overloaded, so we have the following constraint for each server $i$ and each ressource $k$:
-    $$\sum_{j=1}^{m} a_{j,k} \times x_{i,j} \leq c_{i,k} \times y_i$$
+    $$\sum_{j=1}^{m} a_{jk} \times x_{ij} \leq c_{ik} \times y_i$$
 - Any VM must be placed on exactly (or more than?) one server, so we have the following constraint for each VM $j$:
-  $$\sum_{i=1}^{n} x_{i,j} = 1$$
+  $$\sum_{i=1}^{n} x_{ij} = 1$$
   We could potentially relax this constraint to allow the VM to be placed on several servers.
 
 # Problem Generation
@@ -56,23 +56,31 @@ python run.py algo=pyo problem=vmp
 
 This will print the data generation as well as the solution found by the algorithm.
 
-Algorithms currently implemented are :
-- `greedy` : a greedy algorithm that places the VMs on the servers in a greedy way, by placing the VM on the server with the most available resources.
-- `random` : a random algorithm that places the VMs on the servers in a random way until it has found a solution.
+Algorithms, along their tags, currently implemented are :
+- `ff` : First Fit algorithm. An online algorithm that places the VMs on the servers in a greedy way, by placing the VM on the first server that has enough resources.
+- `ffd` : First Fit Decreasing algorithm. The same as the First Fit algorithm, but the VMs are sorted by decreasing order of their capacities before being placed. 
+- `bf` : Best Fit algorithm. An online algorithm that places each VM $j$ on a server $i$ that 1) host the VM and 2) has currently the least averaged normalized capacity.
 - `lp_around` : solve the LP relaxation of the problem, and search randomly around it the valid integer solution.
-- `pyomo` : formalize the problem under the Pyomo framework and solve it using a MILP solver.
+- `bnb` : solve the problem using a Branch and Bound algorithm.
+- `pyo` : formalize the problem under the Pyomo framework and solve it using a MILP solver.
 
 
 # Algorithms
 
 
-### Greedy
+### First Fit
 
-This algorithm places the VMs on the servers in a greedy way, by placing the VM on the server with the most available resources. This is a very simple algorithm, and is not guaranteed to give the optimal solution.
+This algorithm is a simple online algorithm that places the VMs on the servers in a greedy way, by placing the VM on the first server that has enough resources.
 
-### Random
+### First Fit Decreasing
 
-This algorithm places the VMs on the servers in a random way until it has found a solution. This is a very simple algorithm. It is technically guaranteed to give the optimal solution, but the probability of finding it is very low, so the time to find the solution is very high.
+The same as the First Fit algorithm, but the VMs are sorted by decreasing order of their capacities before being placed. 
+
+Because their are several ressources, we use the "averaged normalized capacity" of the VMs to sort them. This is the mean of the normalized ressource capacities, which are the capacities divided by the maximum capacity : $\tilde c_i =\frac{1}{K} \sum_{k=1}^{K} \frac{c_{ik}}{\max_{i'} (c_{i'k})}$.
+
+### Best Fit
+
+This algorithm is an online algorithm that places each VM $j$ on a server $i$ that 1) host the VM and 2) has currently the least averaged normalized capacity. The normalized capacity of a server is the sum of the normalized capacities of the VMs placed on it, and the normalized capacity of a VM is the sum of the normalized capacities of the servers that host it.
 
 ### LP Relaxation + Random Around
 
@@ -95,6 +103,10 @@ It is not guaranteed to give the optimal solution, and even to give a valid solu
 Improvements :
 - It can do slightly better by sampling the solutions without replacement. 
 - If no solutions are found in the ball, it can increase the radius of the ball and try again.
+
+### Branch and Bound
+
+This algorithm is a classic Branch and Bound algorithm. It is a recursive algorithm that explores the solution space by branching on the integer variables. It uses a depth-first search to explore the solution space, and uses a best-first search to explore the tree. It uses a lower bound on the solution to prune the tree, and uses the LP relaxation solution as a lower bound.
 
 ### Pyomo
 
@@ -174,3 +186,17 @@ You can use the following command to solve the problem with this variant (the ta
 ```bash
 python run.py algo=<algo tag> problem=vmp_families
 ```
+
+# Results
+
+Results were obtained by using 10 different seeds for each problem and algorithm, and by logging the `isFeasible` and `objective_value` values of the solution found by the algorithm.
+
+Results are accessible on the WandB platform, at the following link : https://wandb.ai/timotheboulet/operational_research.
+
+For nice visualization, we advise you to :
+- create an account on WandB
+- group runs (using the (around) top left button 'group' on WandB) by, under that order :
+  - problem.name (so that you can compare algorithms on the same problem)
+  - problem.config.n_servers (so that you can compare algorithms on the same instance (because the number of servers vary between `vmp_small`, `vmp` and `vmp_big`))
+  - algo.name (this will group runs by algorithm, giving an overview of the performance of each algorithm)
+- compare algorithms problem by problem (and instance by instance for the VM Placement case) by only showing runs of a certain  problem.name.

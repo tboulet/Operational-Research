@@ -1,8 +1,8 @@
 name: VM Placement with Families
 config:
-  n_servers : 4
-  n_vms : 7
-  n_servers_solution : 2
+  n_servers : 5
+  n_vms : 10
+  n_servers_solution : 4
   ressources:
     cpu:
       vm_distribution: uniform
@@ -24,7 +24,7 @@ config:
   # VM Family
   families_of_vms :
     1: [0, 1, 2]
-    2: [6]
+    2: [6, 7, 8, 9]
     3: [3, 4]
   incomp_family_indexes :
     - [1, 3]

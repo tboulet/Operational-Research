@@ -71,7 +71,7 @@ class VMPlacementProblem(BaseOptimizationProblem):
             self.capacity_bonus_servers_solution_frac, (float, int)
         ), "capacity_bonus_servers_solution_frac must be a float or int"
         assert isinstance(
-            self.capacity_malus_other_servers_frac, float
+            self.capacity_malus_other_servers_frac, (float, int)
         ), "capacity_malus_other_servers_frac must be a float"
 
         if self.verbose >= 1:
@@ -512,7 +512,7 @@ class VMPlacementProblem(BaseOptimizationProblem):
                         )
             print("Unassigned VMs: ", unassigned_vms)
             print(
-                "Upper bound on the objective value was: ",
+                "Upper bound on the optimal objective value was: ",
                 self.n_servers_solution_non_null,
             )
         return isFeasible, len(used_servers)
