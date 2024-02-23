@@ -12,7 +12,7 @@ This problem consist of placing a set of VMs on a set of servers, with the goal 
 - There are $n$ servers and $m$ VMs
 - The goal is to minimize the number of servers used, so we introduce the variable $y_i$ which is equal to 1 if the server $i$ is used, and 0 otherwise. The goal is to minimize the following objective function:
   $$\sum_{i=1}^{n} y_i$$
-- For each ressource $k$ (CPU, RAM, Disk, Network), we note $c_{i,k}$ the capacity of the server $i$ for the ressource $k$, and $a_{j,k}$ the consumption of the VM $j$ for the ressource $k$.
+- For each ressource $k$ (CPU, RAM, Disk, Network), we note $c_{ik}$ the capacity of the server $i$ for the ressource $k$, and $a_{jk}$ the consumption of the VM $j$ for the ressource $k$.
 - Any server cannot be overloaded, so we have the following constraint for each server $i$ and each ressource $k$:
     $$\sum_{j=1}^{m} a_{jk} \times x_{ij} \leq c_{ik} \times y_i$$
 - Any VM must be placed on exactly (or more than?) one server, so we have the following constraint for each VM $j$:
@@ -23,7 +23,7 @@ This problem consist of placing a set of VMs on a set of servers, with the goal 
 
 The VMP instances are generated artificially. The VM data is generated following random distributions (uniform, constant...) that can be defined in the `configs/problem/<problem tag>.yaml` files, where `<problem tag>` is the tag of the VMP variation problem you want to generate. For example, for the default VMP problem, the file is `configs/problem/vmp.yaml`.
 
-The server data is generated from the VM data, which allows the problem to be feasible and provides an almost-lower bound on the optimal solution. In details, it does the following :
+The server data is generated from the VM data, which allows the problem to be feasible and provides an upper bound on the optimal solution, and an almost-lower bound on any solution. In details, it does the following :
 
 - generate the $m$ VMs following configured distributions
 - group those VMs in $k$ groups, with $k \le n$
@@ -76,7 +76,7 @@ This algorithm is a simple online algorithm that places the VMs on the servers i
 
 The same as the First Fit algorithm, but the VMs are sorted by decreasing order of their capacities before being placed. 
 
-Because their are several ressources, we use the "averaged normalized capacity" of the VMs to sort them. This is the mean of the normalized ressource capacities, which are the capacities divided by the maximum capacity : $\tilde c_i =\frac{1}{K} \sum_{k=1}^{K} \frac{c_{ik}}{\max_{i'} (c_{i'k})}$.
+Because their are several ressources, we use the "averaged normalized capacity" of the VMs to sort them. This is the mean of the normalized ressource capacities, which are the capacities divided by the maximum capacity : $\tilde c_i = \text{mean}_k( \frac{c_{ik}}{\max_{i'} (c_{i'k})} )$.
 
 ### Best Fit
 
@@ -151,7 +151,7 @@ python run.py algo=<algo tag> problem=vmp_empty
 
 #### 3) VMs could be splitted over several servers
 
-This is a case where it is possible to split the deployment of any VM on $k$ servers, with $k$ a given integer. This is not equivalent to the linear relaxation case, where $k$ would be equal to the number of servers. In this case the VM can be split but not infinitely.
+This is a case where it is possible to split the deployment of any VM on $k$ servers, with $k$ a given integer. This is not equivalent to the linear relaxation case, where $k$ would be equal to the number of servers. In this case the VM can be split but not infinitely. Additionnally, one could add the constraint that each assignment of a VM to the server should be at least equal to a given fraction $\alpha$ of the VM capacity, because it makes little sense to assign an infinitesimal part of a VM to a server.
 
 In this case, we can relax the integer constraint and set the bounds at (0,1). We now need to force the number of non-null $x_{i,j}$ to be inferior to $k$.
 
